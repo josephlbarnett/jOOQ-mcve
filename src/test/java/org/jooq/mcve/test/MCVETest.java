@@ -37,29 +37,33 @@
  */
 package org.jooq.mcve.test;
 
-import static org.jooq.mcve.Tables.TEST;
-import static org.junit.Assert.assertEquals;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.jooq.DSLContext;
+import org.jooq.DatePart;
+import org.jooq.Record1;
+import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
-import org.jooq.mcve.tables.records.TestRecord;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.sql.Connection;
+
+import static org.junit.Assert.assertEquals;
 
 public class MCVETest {
 
     Connection connection;
     DSLContext ctx;
+    EmbeddedPostgres db;
 
     @Before
     public void setup() throws Exception {
-        connection = DriverManager.getConnection("jdbc:h2:~/mcve", "sa", "");
-        ctx = DSL.using(connection);
+        db = EmbeddedPostgres.builder()
+                .setOutputRedirector(ProcessBuilder.Redirect.DISCARD)
+                .start();
+        connection = db.getPostgresDatabase().getConnection();
+        ctx = DSL.using(connection, SQLDialect.POSTGRES);
     }
 
     @After
@@ -67,18 +71,18 @@ public class MCVETest {
         ctx = null;
         connection.close();
         connection = null;
+        db.close();
     }
 
     @Test
     public void mcveTest() {
-        TestRecord result =
-        ctx.insertInto(TEST)
-           .columns(TEST.VALUE)
-           .values(42)
-           .returning(TEST.ID)
-           .fetchOne();
-
-        result.refresh();
-        assertEquals(42, (int) result.getValue());
+        Record1<String> result = ctx.select(
+                DSL.concat(
+                        DSL.extract(DSL.now(), DatePart.YEAR),
+                        DSL.value("-Q"),
+                        DSL.extract(DSL.now(), DatePart.QUARTER)
+                ).as("qtr")
+        ).fetchOne();
+        assertEquals(result.get(0) + " is in the wrong format", "2016-Q1".length(), ((String)result.get(0)).length());
     }
 }
