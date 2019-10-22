@@ -38,11 +38,9 @@
 package org.jooq.mcve.test;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import org.jooq.DSLContext;
-import org.jooq.DatePart;
-import org.jooq.Record1;
-import org.jooq.SQLDialect;
+import org.jooq.*;
 import org.jooq.impl.DSL;
+import org.jooq.mcve.Tables;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +48,7 @@ import org.junit.Test;
 import java.sql.Connection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MCVETest {
 
@@ -76,13 +75,8 @@ public class MCVETest {
 
     @Test
     public void mcveTest() {
-        Record1<String> result = ctx.select(
-                DSL.concat(
-                        DSL.extract(DSL.now(), DatePart.YEAR),
-                        DSL.value("-Q"),
-                        DSL.extract(DSL.now(), DatePart.QUARTER)
-                ).as("qtr")
-        ).fetchOne();
-        assertEquals(result.get(0) + " is in the wrong format", "2016-Q1".length(), ((String)result.get(0)).length());
+        Field field = Tables.TEST.field("VALUE", Integer.class);
+        assertTrue(field instanceof TableField);
+        assertEquals(Tables.TEST, ((TableField)field).getTable());
     }
 }
