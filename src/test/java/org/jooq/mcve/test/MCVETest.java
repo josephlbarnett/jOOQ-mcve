@@ -42,10 +42,12 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.mcve.Tables;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.Connection;
+import java.time.Year;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -75,8 +77,7 @@ public class MCVETest {
 
     @Test
     public void mcveTest() {
-        Field field = Tables.TEST.field("VALUE", Integer.class);
-        assertTrue(field instanceof TableField);
-        assertEquals(Tables.TEST, ((TableField)field).getTable());
+        Field field = Tables.TEST.field("YEAR", Year.class);
+        Assert.assertTrue(field.lt("2022").toString().contains("'2022'"));
     }
 }
